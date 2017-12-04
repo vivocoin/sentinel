@@ -63,23 +63,6 @@ To view debug output, set the `SENTINEL_DEBUG` environment variable to anything 
 
     $ SENTINEL_DEBUG=1 ./venv/bin/python bin/sentinel.py
 
-## Contributing
-
-Please follow the [VivoCore guidelines for contributing](https://github.com/vivopay/vivo/blob/v0.12.1.x/CONTRIBUTING.md).
-
-Specifically:
-
-* [Contributor Workflow](https://github.com/vivopay/vivo/blob/v0.12.1.x/CONTRIBUTING.md#contributor-workflow)
-
-    To contribute a patch, the workflow is as follows:
-
-    * Fork repository
-    * Create topic branch
-    * Commit patches
-
-    In general commits should be atomic and diffs should be easy to read. For this reason do not mix any formatting fixes or code moves with actual code changes.
-
-    Commit messages should be verbose by default, consisting of a short subject line (50 chars max), a blank line and detailed explanatory text as separate paragraph(s); unless the title alone is self-explanatory (like "Corrected typo in main.cpp") then a single title line is sufficient. Commit messages should be helpful to people reading your code in the future, so explain the reasoning for your decisions. Further explanation [here](http://chris.beams.io/posts/git-commit/).
 
 ### License
 
