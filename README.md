@@ -1,8 +1,9 @@
 # Vivo Sentinel
 
-An all-powerful toolset for Vivo.
+### Follow the installation steps below or the official Vivo sentinel guide: https://www.vivocrypto.com/vivo-technologies/masternodes/sentinel-guide/
 
-### Follow the official Vivo sentinel installation guide: https://www.vivocrypto.com/vivo-technologies/masternodes/sentinel-guide/
+
+Sentinel is an all-powerful toolset for Vivo.
 
 Sentinel is an autonomous agent for persisting, processing and automating Vivo V12.1 governance objects and tasks, and for expanded functions in upcoming releases.
 
@@ -107,7 +108,7 @@ AssetId 999, all trues, one false, and a FINISHED. Keep issuing ./vivo-cli mnsyn
 At this point, your remote masternode is synchronized and chatting with the network but is not accepted as a masternode because it hasn’t been introduced to the network by your collateral.
 
 
-## 7. Start Your Masternode
+## 6. Start Your Masternode
 
  Go back to your local wallet, open the debug console, and run these commands to start your masternode (LABEL is the name you used for your MN in the masternode.conf):
 
