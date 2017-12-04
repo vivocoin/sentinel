@@ -10,7 +10,7 @@ Sentinel is implemented as a Python application that binds to a local version 12
 
 This guide covers installing Sentinel onto an existing 12.1 Masternode in Ubuntu 14.04 / 16.04.
 
-Alternatively to the guide on the Vivo website, you can also follow the simple step-by-step guide below. Before you proceed it is advisable to restart your masternode with -reindex so that you are sure to start off on the right foot, fresh and fully synced - it will save you time later on in the guide.
+Alternatively to the guide on the Vivo website, you can also follow the simple step-by-step guide below. Before you proceed it is advisable to restart your masternode with -reindex to make sure you start off the steps fresh and fully synced - it will save you time later on in the guide as well.
 
 
     cd .vivocore   // Adjust according to your root Vivo directory path
