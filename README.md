@@ -2,11 +2,13 @@
 
 An all-powerful toolset for Vivo.
 
-Sentinel is an autonomous agent for persisting, processing and automating Vivo V12.1 governance objects and tasks, and for expanded functions in the upcoming Vivo V13 release (Evolution).
+Sentinel is an autonomous agent for persisting, processing and automating Vivo V12.1 governance objects and tasks, and for expanded functions in upcoming releases.
 
 Sentinel is implemented as a Python application that binds to a local version 12.1 vivod instance on each Vivo V12.1 Masternode.
 
 This guide covers installing Sentinel onto an existing 12.1 Masternode in Ubuntu 14.04 / 16.04.
+
+You can also follow the step-by-step guide on the official VIVO website: https://www.vivocrypto.com/vivo-technologies/masternodes/sentinel-guide/
 
 ## Installation
 
