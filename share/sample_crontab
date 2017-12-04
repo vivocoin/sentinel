@@ -1,0 +1,2 @@
+# run Vivo-Sentinel every two minutes
+*/2 * * * * cd /var/lib/masternodes/vivo1/sentinel && ./venv/bin/python bin/sentinel.py >/dev/null 2>&1
