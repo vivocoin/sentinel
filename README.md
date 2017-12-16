@@ -1,157 +1,82 @@
-# Vivo Sentinel
+# Desire Sentinel
 
-### Follow the installation steps below or the official Vivo sentinel guide: https://www.vivocrypto.com/vivo-technologies/masternodes/sentinel-guide/
+*You only need this if you are running a masternode and getting WATCHDOG_EXPIRED*
 
+Please test it and consider it to be a **beta**, something might fail (I don't have desire in Windows).
 
-Sentinel is an all-powerful toolset for Vivo.
+Pick an executable (either win/lin) from https://github.com/ZonnCash/sentinel/releases
+Just for reference, sentinel-win64 virustotal (3/67): https://www.virustotal.com/es/file/3a65c0df1fb89607531d8c02bb2a3070f1c39f555944d118c67d8ee616be5b18/analysis/1510697796/
 
-Sentinel is an autonomous agent for persisting, processing and automating Vivo V12.1 governance objects and tasks, and for expanded functions in upcoming releases.
+Use at your own risk, it has been compiled exactly as the Github repo says
 
-Sentinel is implemented as a Python application that binds to a local version 12.1 vivod instance on each Vivo V12.1 Masternode.
+## Before running it
 
-This guide covers installing Sentinel onto an existing 12.1 Masternode in Ubuntu 14.04 / 16.04.
+**1.** Make sure you are running v0.12.2.1
 
-Alternatively to the guide on the Vivo website, you can also follow the simple step-by-step guide below. Before you proceed it is advisable to restart your masternode with -reindex to make sure you start off the steps fresh and fully synced - it will save you time later on in the guide as well.
+**2.** Close your wallet
 
+**3.** Go to desirecore folder and delete "mncache.dat" and "mnpayments.dat"
 
-    cd .vivocore   // Adjust according to your root Vivo directory path
+**4.** Make sure your "desire.conf" contains, at least, the following data:
+rpcuser=someuser
+rpcpassword=somepass
+server=1
+rpcport=9918
+rpcconnect=127.0.0.1
 
-    ./vivo-cli stop
+Try to make rcpuser and rpcpassword hard to guess, you won't need to remember/use them for anything else, so feel free to smash the keyboard
 
-    rm mncache.dat
+**5.** Open wallet. Resync the whole wallet, from the menu "Tools" > "Wallet Repair" > "Rebuild Index"
 
-    rm mnpayments.dat
+**6.** Make sure the wallet is running and completely synced before continuing
 
-    ./vivod -daemon -reindex
+## How to
 
+To make it point to your desire.conf, you have three options:
 
+**A)** Create a file **sentinel.conf** in the same folder as the EXE with the following content:
+desire_conf=C:\path\to\desire.conf
 
-## Installation
+Start sentinel-win64.exe
 
-### 1. Install Prerequisites
+**B)** From a console, execute the EXE by passing arguments 
+sentinel-win64.exe --config=C:\path\to\desire.conf
 
-Make sure Python version 2.7.x or above is installed:
+**C)** By creating a shortcut
 
-    python --version
+1) Right click the sentinel-win64.exe, "Create Shortcut". 
+2) Right click the shortcut, Properties
+3) Edit Target and, at the end, add a SPACE and then "--config=C:\path\to\desire.conf" INCLUDING the quotes "
 
-Update system packages and ensure virtualenv is installed:
+Double click the shortcut to start sentinel.
 
-    $ sudo apt-get update
-    $ sudo apt-get -y install python-virtualenv
+## When everything fails
+If you have followed all the steps and still get WATCHDOG_EXPIRED when issuing "masternode status":
 
-Make sure the local Vivo daemon running is at least version 12.1 (120100)
+**1.** Close the wallet
 
-    $ vivo-cli getinfo | grep version
+**2.** Delete all files inside "desireconf" except for "wallet.dat" and "desire.conf".
+**Please make sure you don't delete wallet.dat! Backup it, for real, that's your coins!**
 
-### 2. Install Sentinel
+**3.** Restart wallet, open sentinel-win64.exe, and let it sync!
 
-Clone the Sentinel repo and install Python dependencies.
+### Feedback
+If it doesn't work, create an *Issue* with detailed explanations
 
-    $ git clone https://github.com/vivocoin/sentinel.git && cd sentinel
-    $ virtualenv ./venv
-    $ ./venv/bin/pip install -r requirements.txt
 
+## Usage
 
-### 3. Configure & Test Your Configuration
+Pick the appropiate file from [https://github.com/ZonnCash/sentinel/releases](Releases)
 
-Open sentinel.conf - Run the following command in linux:
+Open file `sentinel.conf` and change `desire_conf` to point to your desire configuration file
 
-    $ nano sentinel.conf
+Run `sentinel.exe` and keep it open, that's all.
 
-Uncomment the #vivo_conf line, at the top of the file, then adjust the path to your Masternode’s vivo.conf. Save the file then close it.
+You might pass arguments to `sentinel.exe`, for example `sentinel.exe --config="C:\path\to\desire.conf"`
 
-    vivo_conf=/path/to/vivo.conf
 
-Now run:
+# Building
 
-    $ venv/bin/python bin/sentinel.py
+Install pyinstaller `pip install pyinstaller`
 
-You should see: “vivod not synced with network! Awaiting full sync before running Sentinel.”
-This is exactly what we want to see at this stage.
-
-If the wallet has been resynched alreaedy, you will see no output which is what you want to see and it means you can skip the next sync step.
-
-
-## 4. Check That Your Vivo Wallet is Synced 
-
-Go back into your root Vivo directory, then check the status of your sync:
-
-    cd .. 
-    ./vivo-cli mnsync status
-
-
-This is what you’re waiting to see:
-
-AssetId 999, all trues, one false, and a FINISHED. Keep issuing ./vivo-cli mnsync status until it looks like this:
-
-
-    {
-    “AssetID”: 999,
-    “AssetName”: “MASTERNODE_SYNC_FINISHED”,
-    “Attempt”: 0,
-    “IsBlockchainSynced”: true,
-    “IsMasternodeListSynced”: true,
-    “IsWinnersListSynced”: true,
-    “IsSynced”: true,
-    “IsFailed”: false
-    }
-    
-At this point, your remote masternode is synchronized and chatting with the network but is not accepted as a masternode because it hasn’t been introduced to the network by your collateral.
-
-
-## 5. Start Your Masternode
-
- Go back to your local wallet, open the debug console, and run these commands to start your masternode (LABEL is the name you used for your MN in the masternode.conf):
-
-    walletpassphrase <YOURPASSPHRASE> 120 (only if you have a wallet password)
-    masternode start-alias <LABEL>
-
-
-## 6. Test Your Sentinel
-
-You’re needed back in Sentinel directory:
-
-    cd sentinel
-
-Run:
-
-    venv/bin/python bin/sentinel.py
-
-It should return no output if everything is working correctly. This is how you know it’s working, and your masternode and sentinel setup is properly configured.
-
-## 7. Create Your Sentinel Crontab Entry
-
-Run:
-
-    crontab -e
-
-Add the following line below to the end of the file:
-
-    * * * * * cd /home/YOURUSERNAME/.vivocore/sentinel && ./venv/bin/python bin/sentinel.py 2>&1 >> sentinel-cron.log
-    
-
-Make sure you:
-
-1) Change USERNAME to your username.
-2) Hit enter to create another line at the end after this line, or the file will not work.
-
-Save and exit.
-
-## 8. All Done On Sentinel. Finally Check Your Masternode
-
-Go back into your Vivo root directory:
-
-    cd ..
-
-Run:
-
-    ./vivo-cli masternode debug
-
-You should see the message “Masternode successfully started.”. If you have followed all the steps outlined in the guide accurately and achieved this result - this is it, you've made it. Congratulations!
-
-## Troubleshooting
-
-To view debug output, set the `SENTINEL_DEBUG` environment variable to anything non-zero, then run the script manually:
-
-    $ SENTINEL_DEBUG=1 ./venv/bin/python bin/sentinel.py
-
+Generate output EXE/ELF: `pyinstaller --onefile --paths=lib/ main.py`

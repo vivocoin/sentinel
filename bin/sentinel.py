@@ -5,7 +5,7 @@ sys.path.append(os.path.normpath(os.path.join(os.path.dirname(__file__), '../lib
 import init
 import config
 import misc
-from vivod import VivoDaemon
+from desired import DesireDaemon
 from models import Superblock, Proposal, GovernanceObject, Watchdog
 from models import VoteSignals, VoteOutcomes, Transient
 import socket
@@ -17,24 +17,24 @@ import atexit
 import random
 from scheduler import Scheduler
 import argparse
+from termcolor import colored
 
-
-# sync vivod gobject list with our local relational DB backend
-def perform_vivod_object_sync(vivod):
-    GovernanceObject.sync(vivod)
+# sync desired gobject list with our local relational DB backend
+def perform_desired_object_sync(desired):
+    GovernanceObject.sync(desired)
 
 
 # delete old watchdog objects, create new when necessary
-def watchdog_check(vivod):
+def watchdog_check(desired):
     printdbg("in watchdog_check")
 
     # delete expired watchdogs
-    for wd in Watchdog.expired(vivod):
+    for wd in Watchdog.expired(desired):
         printdbg("\tFound expired watchdog [%s], voting to delete" % wd.object_hash)
-        wd.vote(vivod, VoteSignals.delete, VoteOutcomes.yes)
+        wd.vote(desired, VoteSignals.delete, VoteOutcomes.yes)
 
     # now, get all the active ones...
-    active_wd = Watchdog.active(vivod)
+    active_wd = Watchdog.active(desired)
     active_count = active_wd.count()
 
     # none exist, submit a new one to the network
@@ -42,7 +42,7 @@ def watchdog_check(vivod):
         # create/submit one
         printdbg("\tNo watchdogs exist... submitting new one.")
         wd = Watchdog(created_at=int(time.time()))
-        wd.submit(vivod)
+        wd.submit(desired)
 
     else:
         wd_list = sorted(active_wd, key=lambda wd: wd.object_hash)
@@ -50,35 +50,35 @@ def watchdog_check(vivod):
         # highest hash wins
         winner = wd_list.pop()
         printdbg("\tFound winning watchdog [%s], voting VALID" % winner.object_hash)
-        winner.vote(vivod, VoteSignals.valid, VoteOutcomes.yes)
+        winner.vote(desired, VoteSignals.valid, VoteOutcomes.yes)
 
         # if remaining Watchdogs exist in the list, vote delete
         for wd in wd_list:
             printdbg("\tFound losing watchdog [%s], voting DELETE" % wd.object_hash)
-            wd.vote(vivod, VoteSignals.delete, VoteOutcomes.yes)
+            wd.vote(desired, VoteSignals.delete, VoteOutcomes.yes)
 
     printdbg("leaving watchdog_check")
 
 
-def prune_expired_proposals(vivod):
+def prune_expired_proposals(desired):
     # vote delete for old proposals
-    for proposal in Proposal.expired(vivod.superblockcycle()):
-        proposal.vote(vivod, VoteSignals.delete, VoteOutcomes.yes)
+    for proposal in Proposal.expired(desired.superblockcycle()):
+        proposal.vote(desired, VoteSignals.delete, VoteOutcomes.yes)
 
 
-# ping vivod
-def sentinel_ping(vivod):
+# ping desired
+def sentinel_ping(desired):
     printdbg("in sentinel_ping")
 
-    vivod.ping()
+    desired.ping()
 
     printdbg("leaving sentinel_ping")
 
 
-def attempt_superblock_creation(vivod):
-    import vivolib
+def attempt_superblock_creation(desired):
+    import desirelib
 
-    if not vivod.is_masternode():
+    if not desired.is_masternode():
         print("We are not a Masternode... can't submit superblocks!")
         return
 
@@ -89,7 +89,7 @@ def attempt_superblock_creation(vivod):
     # has this masternode voted on *any* superblocks at the given event_block_height?
     # have we voted FUNDING=YES for a superblock for this specific event_block_height?
 
-    event_block_height = vivod.next_superblock_height()
+    event_block_height = desired.next_superblock_height()
 
     if Superblock.is_voted_funding(event_block_height):
         # printdbg("ALREADY VOTED! 'til next time!")
@@ -97,20 +97,20 @@ def attempt_superblock_creation(vivod):
         # vote down any new SBs because we've already chosen a winner
         for sb in Superblock.at_height(event_block_height):
             if not sb.voted_on(signal=VoteSignals.funding):
-                sb.vote(vivod, VoteSignals.funding, VoteOutcomes.no)
+                sb.vote(desired, VoteSignals.funding, VoteOutcomes.no)
 
         # now return, we're done
         return
 
-    if not vivod.is_govobj_maturity_phase():
+    if not desired.is_govobj_maturity_phase():
         printdbg("Not in maturity phase yet -- will not attempt Superblock")
         return
 
-    proposals = Proposal.approved_and_ranked(proposal_quorum=vivod.governance_quorum(), next_superblock_max_budget=vivod.next_superblock_max_budget())
-    budget_max = vivod.get_superblock_budget_allocation(event_block_height)
-    sb_epoch_time = vivod.block_height_to_epoch(event_block_height)
+    proposals = Proposal.approved_and_ranked(proposal_quorum=desired.governance_quorum(), next_superblock_max_budget=desired.next_superblock_max_budget())
+    budget_max = desired.get_superblock_budget_allocation(event_block_height)
+    sb_epoch_time = desired.block_height_to_epoch(event_block_height)
 
-    sb = vivolib.create_superblock(proposals, event_block_height, budget_max, sb_epoch_time)
+    sb = desirelib.create_superblock(proposals, event_block_height, budget_max, sb_epoch_time)
     if not sb:
         printdbg("No superblock created, sorry. Returning.")
         return
@@ -118,12 +118,12 @@ def attempt_superblock_creation(vivod):
     # find the deterministic SB w/highest object_hash in the DB
     dbrec = Superblock.find_highest_deterministic(sb.hex_hash())
     if dbrec:
-        dbrec.vote(vivod, VoteSignals.funding, VoteOutcomes.yes)
+        dbrec.vote(desired, VoteSignals.funding, VoteOutcomes.yes)
 
         # any other blocks which match the sb_hash are duplicates, delete them
         for sb in Superblock.select().where(Superblock.sb_hash == sb.hex_hash()):
             if not sb.voted_on(signal=VoteSignals.funding):
-                sb.vote(vivod, VoteSignals.delete, VoteOutcomes.yes)
+                sb.vote(desired, VoteSignals.delete, VoteOutcomes.yes)
 
         printdbg("VOTED FUNDING FOR SB! We're done here 'til next superblock cycle.")
         return
@@ -131,24 +131,24 @@ def attempt_superblock_creation(vivod):
         printdbg("The correct superblock wasn't found on the network...")
 
     # if we are the elected masternode...
-    if (vivod.we_are_the_winner()):
+    if (desired.we_are_the_winner()):
         printdbg("we are the winner! Submit SB to network")
-        sb.submit(vivod)
+        sb.submit(desired)
 
 
-def check_object_validity(vivod):
+def check_object_validity(desired):
     # vote (in)valid objects
     for gov_class in [Proposal, Superblock]:
         for obj in gov_class.select():
-            obj.vote_validity(vivod)
+            obj.vote_validity(desired)
 
 
-def is_vivod_port_open(vivod):
+def is_desired_port_open(desired):
     # test socket open before beginning, display instructive message to MN
     # operators if it's not
     port_open = False
     try:
-        info = vivod.rpc_command('getgovernanceinfo')
+        info = desired.rpc_command('getgovernanceinfo')
         port_open = True
     except (socket.error, JSONRPCException) as e:
         print("%s" % e)
@@ -157,22 +157,22 @@ def is_vivod_port_open(vivod):
 
 
 def main():
-    vivod = VivoDaemon.from_vivo_conf(config.vivo_conf)
+    desired = DesireDaemon.from_desire_conf(config.desire_conf)
     options = process_args()
 
-    # check vivod connectivity
-    if not is_vivod_port_open(vivod):
-        print("Cannot connect to vivod. Please ensure vivod is running and the JSONRPC port is open to Sentinel.")
+    # check desired connectivity
+    if not is_desired_port_open(desired):
+        print(colored("Cannot connect to desired. Please ensure desired is running and the JSONRPC port is open to Sentinel.", 'red'))
         return
 
-    # check vivod sync
-    if not vivod.is_synced():
-        print("vivod not synced with network! Awaiting full sync before running Sentinel.")
+    # check desired sync
+    if not desired.is_synced():
+        print(colored("desired not synced with network! Awaiting full sync before running Sentinel.", 'yellow'))
         return
 
     # ensure valid masternode
-    if not vivod.is_masternode():
-        print("Invalid Masternode Status, cannot continue.")
+    if not desired.is_masternode():
+        print(colored('yellow', "Invalid Masternode Status, cannot continue."))
         return
 
     # register a handler if SENTINEL_DEBUG is set
@@ -203,22 +203,22 @@ def main():
     # ========================================================================
     #
     # load "gobject list" rpc command data, sync objects into internal database
-    perform_vivod_object_sync(vivod)
+    perform_desired_object_sync(desired)
 
-    if vivod.has_sentinel_ping:
-        sentinel_ping(vivod)
+    if desired.has_sentinel_ping:
+        sentinel_ping(desired)
     else:
         # delete old watchdog objects, create a new if necessary
-        watchdog_check(vivod)
+        watchdog_check(desired)
 
     # auto vote network objects as valid/invalid
-    # check_object_validity(vivod)
+    # check_object_validity(desired)
 
     # vote to delete expired proposals
-    prune_expired_proposals(vivod)
+    prune_expired_proposals(desired)
 
     # create a Superblock if necessary
-    attempt_superblock_creation(vivod)
+    attempt_superblock_creation(desired)
 
     # schedule the next run
     Scheduler.schedule_next_run()
@@ -230,12 +230,12 @@ def signal_handler(signum, frame):
     sys.exit(1)
 
 
-def cleanup():
+def cleanup(mutex_key):
     Transient.delete(mutex_key)
 
 
 def process_args():
-    parser = argparse.ArgumentParser()
+    parser = config.get_argarse()
     parser.add_argument('-b', '--bypass-scheduler',
                         action='store_true',
                         help='Bypass scheduler and sync/vote immediately',
@@ -245,12 +245,14 @@ def process_args():
     return args
 
 
-if __name__ == '__main__':
-    atexit.register(cleanup)
+def entrypoint():
+    # ensure another instance of Sentinel pointing at the same config
+    # is not currently running
+    mutex_key = 'SENTINEL_RUNNING_' + config.desire_conf
+
+    atexit.register(cleanup, mutex_key)
     signal.signal(signal.SIGINT, signal_handler)
 
-    # ensure another instance of Sentinel is not currently running
-    mutex_key = 'SENTINEL_RUNNING'
     # assume that all processes expire after 'timeout_seconds' seconds
     timeout_seconds = 90
 
@@ -265,3 +267,6 @@ if __name__ == '__main__':
     main()
 
     Transient.delete(mutex_key)
+
+if __name__ == '__main__':
+    entrypoint()

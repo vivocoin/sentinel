@@ -1,30 +1,70 @@
 """
     Set up defaults and read sentinel.conf
 """
+import argparse
 import sys
 import os
-from vivo_config import VivoConfig
+from desire_config import DesireConfig
+
 
 default_sentinel_config = os.path.normpath(
     os.path.join(os.path.dirname(__file__), '../sentinel.conf')
 )
+
+if not os.path.isfile(default_sentinel_config):
+    base = os.path.abspath(os.path.dirname(sys.argv[0]))
+    default_sentinel_config = os.path.join(base, 'sentinel.conf')
+
 sentinel_config_file = os.environ.get('SENTINEL_CONFIG', default_sentinel_config)
-sentinel_cfg = VivoConfig.tokenize(sentinel_config_file)
+
+sentinel_cfg = DesireConfig.tokenize(sentinel_config_file)
 sentinel_version = "1.1.0"
-min_vivod_proto_version_with_sentinel_ping = 70207
+min_desired_proto_version_with_sentinel_ping = 70207
 
-def get_vivo_conf():
-    home = os.environ.get('HOME')
 
-    if sys.platform == 'darwin':
-        vivo_conf = os.path.join(home, "Library/Application Support/VivoCore/vivo.conf")
-    elif sys.platform == 'win32':
-        vivo_conf = os.path.join(os.environ['APPDATA'], "VivoCore/Vivo.conf")
+def get_argarse():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--config', type=str, required=False)
+    parser.add_argument('--rpc-port', type=int, required=False)
+    parser.add_argument('--repair', action='store_true', default=False, required=False)
+    parser.add_argument('--sentinel', action='store_true', default=False, required=False)
+    return parser
+
+def get_args():
+    parser = get_argarse()
+
+    try:
+        args = parser.parse_args()
+    except:
+        # We are inside tests
+        parser.add_argument('folder')
+        args = parser.parse_args()
+
+    return args
+
+def get_desire_conf():
+    args = get_args()
+
+    if args.config:
+        desire_conf = args.config
     else:
-        vivo_conf = os.path.join(home, ".vivocore/vivo.conf")
-        vivo_conf = sentinel_cfg.get('vivo_conf', vivo_conf)
+        home = os.environ.get('HOME')
+        if home is not None:
+            if sys.platform == 'darwin':
+                desire_conf = os.path.join(home, "Library/Application Support/DesireCore/desire.conf")
+            else:
+                desire_conf = os.path.join(home, ".desirecore/desire.conf")
+        else:
+            home = os.getenv('APPDATA')
+            if home is not None:
+                desire_conf = os.path.join(home, "desirecore\\desire.conf")
+            else:
+                desire_conf = 'desire.conf'
+        
+        desire_conf = sentinel_cfg.get('desire_conf', desire_conf)
 
-    return vivo_conf
+    return desire_conf
+
 
 def get_network():
     return sentinel_cfg.get('network', 'mainnet')
@@ -79,6 +119,6 @@ def get_db_conn():
     return db
 
 
-vivo_conf = get_vivo_conf()
+desire_conf = get_desire_conf()
 network = get_network()
 db = get_db_conn()

@@ -1,3 +1,4 @@
+from builtins import input
 import sys
 import os
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
@@ -57,23 +58,23 @@ def is_database_correctly_configured():
     return configured
 
 
-def has_vivo_conf():
+def has_desire_conf():
     import config
     import io
 
-    valid_vivo_conf = False
+    valid_desire_conf = False
 
-    # ensure vivo_conf exists & readable
+    # ensure desire_conf exists & readable
     #
-    # if not, print a message stating that Vivo Core must be installed and
-    # configured, including JSONRPC access in vivo.conf
+    # if not, print a message stating that Desire Core must be installed and
+    # configured, including JSONRPC access in desire.conf
     try:
-        f = io.open(config.vivo_conf)
-        valid_vivo_conf = True
+        f = io.open(config.desire_conf)
+        valid_desire_conf = True
     except IOError as e:
         print(e)
 
-    return valid_vivo_conf
+    return valid_desire_conf
 
 
 # === begin main
@@ -84,19 +85,27 @@ def main():
 
     if not is_valid_python_version():
         print("Python %s is not supported" % python_short_ver_str())
+
+        input('Press [ENTER] to exit')
         sys.exit(1)
 
     if not are_deps_installed():
         print("Please ensure all dependencies are installed:")
         print(install_instructions)
+
+        input('Press [ENTER] to exit')
         sys.exit(1)
 
     if not is_database_correctly_configured():
         print("Please ensure correct database configuration.")
+
+        input('Press [ENTER] to exit')
         sys.exit(1)
 
-    if not has_vivo_conf():
-        print("VivoCore must be installed and configured, including JSONRPC access in vivo.conf")
+    if not has_desire_conf():
+        print("DesireCore must be installed and configured, including JSONRPC access in desire.conf")
+        
+        input('Press [ENTER] to exit')
         sys.exit(1)
 
 
