@@ -8,30 +8,30 @@ sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..', 'lib'))
 sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..'))
 import config
 
-from vivod import VivoDaemon
-from vivo_config import VivoConfig
+from desired import DesireDaemon
+from desire_config import DesireConfig
 
 
-def test_vivod():
-    config_text = VivoConfig.slurp_config_file(config.vivo_conf)
+def test_desired():
+    config_text = DesireConfig.slurp_config_file(config.desire_conf)
     network = 'mainnet'
     is_testnet = False
-    genesis_hash = u'00000ffd590b1485b3caadc19b22e6379c733355108f107a430458cdf3407ab6'
+    genesis_hash = u'00000f79a81b6318e0f36dc486adf4bb5bb1fa34025d69b991893c42978c2027'
     for line in config_text.split("\n"):
         if line.startswith('testnet=1'):
             network = 'testnet'
             is_testnet = True
             genesis_hash = u'00000bafbc94add76cb75e2ec92894837288a481e5c005f6563d91623bf8bc2c'
 
-    creds = VivoConfig.get_rpc_creds(config_text, network)
-    vivod = VivoDaemon(**creds)
-    assert vivod.rpc_command is not None
+    creds = DesireConfig.get_rpc_creds(config_text, network)
+    desired = DesireDaemon(**creds)
+    assert desired.rpc_command is not None
 
-    assert hasattr(vivod, 'rpc_connection')
+    assert hasattr(desired, 'rpc_connection')
 
-    # Vivo testnet block 0 hash == 00000bafbc94add76cb75e2ec92894837288a481e5c005f6563d91623bf8bc2c
+    # Desire testnet block 0 hash == 00000bafbc94add76cb75e2ec92894837288a481e5c005f6563d91623bf8bc2c
     # test commands without arguments
-    info = vivod.rpc_command('getinfo')
+    info = desired.rpc_command('getinfo')
     info_keys = [
         'blocks',
         'connections',
@@ -48,4 +48,4 @@ def test_vivod():
     assert info['testnet'] is is_testnet
 
     # test commands with args
-    assert vivod.rpc_command('getblockhash', 0) == genesis_hash
+    assert desired.rpc_command('getblockhash', 0) == genesis_hash
