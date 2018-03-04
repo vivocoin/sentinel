@@ -15,7 +15,9 @@ import time
 
 class VivoDaemon():
     def __init__(self, **kwargs):
-        host = kwargs.get('host', '127.0.0.1')
+        host = config.sentinel_cfg.get('vivo_host', None)
+        if host is None:
+            host = kwargs.get('host', '127.0.0.1')
         user = kwargs.get('user')
         password = kwargs.get('password')
         port = kwargs.get('port')

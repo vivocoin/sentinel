@@ -10,6 +10,7 @@ import simplejson
 import binascii
 from misc import printdbg, epoch2str
 import time
+import config
 
 
 def is_valid_vivo_address(address, network='mainnet'):
@@ -250,8 +251,9 @@ def did_we_vote(output):
     voted = False
     err_msg = ''
 
+    _, config_filename = os.path.split(config.vivo_conf)
     try:
-        detail = output.get('detail').get('vivo.conf')
+        detail = output.get('detail').get(config_filename)
         result = detail.get('result')
         if 'errorMessage' in detail:
             err_msg = detail.get('errorMessage')
