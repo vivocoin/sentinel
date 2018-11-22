@@ -1,7 +1,5 @@
 # Vivo Sentinel
 
-### Follow the installation steps below or the official Vivo sentinel guide: https://www.vivocrypto.com/vivo-technologies/masternodes/sentinel-guide/
-
 
 Sentinel is an all-powerful toolset for Vivo.
 
