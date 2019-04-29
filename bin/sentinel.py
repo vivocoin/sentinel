@@ -159,21 +159,25 @@ def is_vivod_port_open(vivod):
 def main():
     vivod = VivoDaemon.from_vivo_conf(config.vivo_conf)
     options = process_args()
+    printdbg("Got Args =======")
 
     # check vivod connectivity
     if not is_vivod_port_open(vivod):
         print("Cannot connect to vivod. Please ensure vivod is running and the JSONRPC port is open to Sentinel.")
         return
+    printdbg("PORT IS OPEN =======")
 
     # check vivod sync
     if not vivod.is_synced():
         print("vivod not synced with network! Awaiting full sync before running Sentinel.")
         return
+    printdbg("VIVO IS Synced =======")
 
     # ensure valid masternode
     if not vivod.is_masternode():
         print("Invalid Masternode Status, cannot continue.")
         return
+    printdbg("masternode valid =======")
 
     # register a handler if SENTINEL_DEBUG is set
     if os.environ.get('SENTINEL_DEBUG', None):
@@ -186,17 +190,20 @@ def main():
         # bypassing scheduler, remove the scheduled event
         printdbg("--bypass-schedule option used, clearing schedule")
         Scheduler.clear_schedule()
+    printdbg("AFter check clear schedule =======")
 
-    if not Scheduler.is_run_time():
-        printdbg("Not yet time for an object sync/vote, moving on.")
-        return
+    #-if not Scheduler.is_run_time():
+        #-printdbg("Not yet time for an object sync/vote, moving on.")
+        #-return
 
-    if not options.bypass:
+    #-if not options.bypass:
         # delay to account for cron minute sync
-        Scheduler.delay()
+        #-Scheduler.delay()
+    printdbg("RUNNING NOW ++++++++ =======")
 
     # running now, so remove the scheduled event
     Scheduler.clear_schedule()
+    printdbg("clearing schedule going to load object list =======")
 
     # ========================================================================
     # general flow:
@@ -204,24 +211,7 @@ def main():
     #
     # load "gobject list" rpc command data, sync objects into internal database
     perform_vivod_object_sync(vivod)
-
-    if vivod.has_sentinel_ping:
-        sentinel_ping(vivod)
-    else:
-        # delete old watchdog objects, create a new if necessary
-        watchdog_check(vivod)
-
-    # auto vote network objects as valid/invalid
-    # check_object_validity(vivod)
-
-    # vote to delete expired proposals
-    prune_expired_proposals(vivod)
-
-    # create a Superblock if necessary
-    attempt_superblock_creation(vivod)
-
-    # schedule the next run
-    Scheduler.schedule_next_run()
+    printdbg("loaded check if has ping -Done =======")
 
 
 def signal_handler(signum, frame):
