@@ -145,7 +145,7 @@ class GovernanceObject(BaseModel):
 
             sub, params = subclass(**newdikt), []
             if isinstance(sub, Watchdog):
-                params = [dashd]
+                params = [vivod]
 
             if sub.is_valid(*params) is False:
                 govobj.vote_delete(vivod)
